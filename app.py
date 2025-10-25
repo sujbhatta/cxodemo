@@ -84,11 +84,19 @@ def is_cache_valid(symbol):
 
 def fetch_stock_data(symbol):
     """Fetch stock data from yfinance or cache"""
-    # Check cache first
-    if is_cache_valid(symbol):
-        print(f"Loading {symbol} from cache")
-        df = pd.read_csv(get_cache_path(symbol), index_col=0, parse_dates=True)
-        return df
+    cache_path = get_cache_path(symbol)
+
+    # For demo: Always use cache if it exists (skip TTL check)
+    if cache_path.exists():
+        print(f"✓ Loading {symbol} from cache: {cache_path}")
+        try:
+            df = pd.read_csv(cache_path, index_col=0, parse_dates=True)
+            print(f"  Loaded {len(df)} rows from cache")
+            return df
+        except Exception as e:
+            print(f"  ⚠ Error reading cache: {e}, will fetch fresh data")
+    else:
+        print(f"⚠ Cache file not found: {cache_path}")
 
     print(f"Fetching {symbol} from yfinance")
 
