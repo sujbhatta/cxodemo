@@ -60,18 +60,37 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
     try:
         creds_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
         print(f"  JSON length: {len(creds_json)} characters")
-        creds_data = json.loads(creds_json)
-        print(f"  Parsed JSON successfully, project_id: {creds_data.get('project_id', 'N/A')}")
 
-        with open(creds_path, 'w') as f:
-            json.dump(creds_data, f)
+        # Handle newlines and control characters
+        # Some JSON may have literal newlines in strings that need escaping
+        import re
+        # Replace literal newlines in the private_key field with \\n
+        creds_json_cleaned = creds_json.replace('\\n', '\\\\n')
 
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-        print(f"  ✓ Created credentials file: {creds_path}")
-        print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
+        try:
+            creds_data = json.loads(creds_json_cleaned)
+        except json.JSONDecodeError:
+            # If that didn't work, try writing directly as-is (might be already properly formatted)
+            print(f"  Trying alternative JSON parsing...")
+            # Write the JSON directly to file and let the SDK handle it
+            with open(creds_path, 'w') as f:
+                f.write(creds_json)
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+            print(f"  ✓ Created credentials file (direct write): {creds_path}")
+            print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
+            creds_data = None  # Skip the json.dump below
+
+        if creds_data:
+            print(f"  Parsed JSON successfully, project_id: {creds_data.get('project_id', 'N/A')}")
+            with open(creds_path, 'w') as f:
+                json.dump(creds_data, f)
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+            print(f"  ✓ Created credentials file: {creds_path}")
+            print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
+
     except json.JSONDecodeError as e:
         print(f"  ✗ JSON decode error: {e}")
-        print(f"  First 100 chars: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')[:100]}")
+        print(f"  First 200 chars: {repr(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')[:200])}")
     except Exception as e:
         print(f"  ✗ Error creating credentials: {e}")
 else:
