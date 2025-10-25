@@ -19,8 +19,9 @@ ENV/
 *.swp
 *.swo
 
-# Data cache (will be created in container)
-data/*.csv
+# Data cache
+# Note: CSV files are INCLUDED for demo (pre-cached stock data)
+# data/*.csv
 
 # Environment files (set via Spaces secrets)
 .env
