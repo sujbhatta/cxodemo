@@ -22,17 +22,31 @@ load_dotenv()
 
 # Handle Google Cloud credentials for Hugging Face Spaces
 # Spaces stores secrets as environment variables, but we need a JSON file
+print("Checking for Google Cloud credentials...")
 if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
-    import json
+    print("  Found GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable")
     creds_path = 'google_credentials.json'
     try:
-        creds_data = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
+        creds_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+        print(f"  JSON length: {len(creds_json)} characters")
+        creds_data = json.loads(creds_json)
+        print(f"  Parsed JSON successfully, project_id: {creds_data.get('project_id', 'N/A')}")
+
         with open(creds_path, 'w') as f:
             json.dump(creds_data, f)
+
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-        print("✓ Created credentials file from environment variable")
+        print(f"  ✓ Created credentials file: {creds_path}")
+        print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
+    except json.JSONDecodeError as e:
+        print(f"  ✗ JSON decode error: {e}")
+        print(f"  First 100 chars: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')[:100]}")
     except Exception as e:
-        print(f"⚠ Warning: Failed to create credentials from env var: {e}")
+        print(f"  ✗ Error creating credentials: {e}")
+else:
+    print("  ⚠ GOOGLE_APPLICATION_CREDENTIALS_JSON not found in environment")
+    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+        print(f"  Found GOOGLE_APPLICATION_CREDENTIALS: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')}")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -50,19 +64,33 @@ SUPPORTED_STOCKS = {
 }
 
 # Initialize Google Vertex AI Gemini client
+print("\nInitializing Gemini AI client...")
 gemini_client = None
-if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+creds_file = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+project_id = os.getenv('GOOGLE_PROJECT_ID', 'gemini-423216')
+location = os.getenv('GOOGLE_LOCATION', 'us-central1')
+
+print(f"  Credentials file: {creds_file}")
+print(f"  Project ID: {project_id}")
+print(f"  Location: {location}")
+
+if creds_file and os.path.exists(creds_file):
+    print(f"  ✓ Credentials file exists: {creds_file}")
     try:
         gemini_client = vertex_genai.Client(
             vertexai=True,
-            project=os.getenv('GOOGLE_PROJECT_ID', 'gemini-423216'),
-            location=os.getenv('GOOGLE_LOCATION', 'us-central1')
+            project=project_id,
+            location=location
         )
-        print("✓ Gemini AI client initialized successfully")
+        print("  ✓ Gemini AI client initialized successfully!")
     except Exception as e:
-        print(f"⚠ Warning: Failed to initialize Gemini client: {e}")
+        print(f"  ✗ Failed to initialize Gemini client: {e}")
+        import traceback
+        traceback.print_exc()
+elif creds_file:
+    print(f"  ✗ Credentials file set but doesn't exist: {creds_file}")
 else:
-    print("⚠ Warning: GOOGLE_APPLICATION_CREDENTIALS not set")
+    print("  ✗ GOOGLE_APPLICATION_CREDENTIALS not set")
 
 
 def get_cache_path(symbol):
