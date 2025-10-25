@@ -5,6 +5,7 @@ Flask backend with yfinance data, technical indicators, and Google Gemini AI rep
 
 import os
 import json
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -90,22 +91,35 @@ def fetch_stock_data(symbol):
         return df
 
     print(f"Fetching {symbol} from yfinance")
-    try:
-        # Fetch 1 year of daily data
-        stock = yf.Ticker(symbol)
-        df = stock.history(period='1y', interval='1d')
 
-        if df.empty:
-            raise ValueError(f"No data returned for {symbol}")
+    # Retry logic for network issues
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Fetch 1 year of daily data
+            stock = yf.Ticker(symbol)
+            df = stock.history(period='1y', interval='1d', timeout=30)
 
-        # Save to cache
-        df.to_csv(get_cache_path(symbol))
-        print(f"Cached {symbol} data ({len(df)} rows)")
-        return df
+            if df.empty:
+                print(f"Attempt {attempt + 1}: No data returned for {symbol}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in 2 seconds...")
+                    time.sleep(2)
+                    continue
+                raise ValueError(f"No data available for {symbol}. Please check the symbol or try again later.")
 
-    except Exception as e:
-        print(f"Error fetching {symbol}: {e}")
-        raise
+            # Save to cache
+            df.to_csv(get_cache_path(symbol))
+            print(f"✓ Cached {symbol} data ({len(df)} rows)")
+            return df
+
+        except Exception as e:
+            print(f"Attempt {attempt + 1}/{max_retries} - Error fetching {symbol}: {str(e)}")
+            if attempt < max_retries - 1:
+                print(f"Retrying...")
+                time.sleep(2)
+            else:
+                raise Exception(f"Failed to fetch data for {symbol} after {max_retries} attempts. Error: {str(e)}")
 
 
 def calculate_moving_averages(df):
