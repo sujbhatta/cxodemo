@@ -1,3 +1,12 @@
+---
+title: Stock Research Dashboard
+emoji: 📈
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # Stock Research Dashboard
 
 A production-ready stock analysis dashboard powered by Flask, yfinance, and Google Gemini AI. This application provides real-time technical analysis and AI-generated investment reports for Indian stocks.
