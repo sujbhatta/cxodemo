@@ -20,9 +20,22 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Debug: Check what environment variables are available (for Hugging Face Spaces)
+print("=" * 60)
+print("DEBUG: Environment variables check")
+print("=" * 60)
+print(f"SPACE_ID: {os.getenv('SPACE_ID', 'Not set')}")
+print(f"SPACE_AUTHOR_NAME: {os.getenv('SPACE_AUTHOR_NAME', 'Not set')}")
+print(f"SPACE_REPO_NAME: {os.getenv('SPACE_REPO_NAME', 'Not set')}")
+print(f"GOOGLE_APPLICATION_CREDENTIALS_JSON: {'Set (' + str(len(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON', ''))) + ' chars)' if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON') else 'NOT SET'}")
+print(f"GOOGLE_PROJECT_ID: {os.getenv('GOOGLE_PROJECT_ID', 'NOT SET')}")
+print(f"GOOGLE_LOCATION: {os.getenv('GOOGLE_LOCATION', 'NOT SET')}")
+print(f"GEMINI_MODEL: {os.getenv('GEMINI_MODEL', 'NOT SET')}")
+print("=" * 60)
+
 # Handle Google Cloud credentials for Hugging Face Spaces
 # Spaces stores secrets as environment variables, but we need a JSON file
-print("Checking for Google Cloud credentials...")
+print("\nChecking for Google Cloud credentials...")
 if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
     print("  Found GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable")
     creds_path = 'google_credentials.json'
