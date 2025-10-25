@@ -20,13 +20,31 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Debug: Check what environment variables are available (for Hugging Face Spaces)
+# Hugging Face Spaces Docker: Read secrets from /run/secrets/
 print("=" * 60)
-print("DEBUG: Environment variables check")
+print("Checking for Hugging Face Spaces secrets...")
 print("=" * 60)
-print(f"SPACE_ID: {os.getenv('SPACE_ID', 'Not set')}")
-print(f"SPACE_AUTHOR_NAME: {os.getenv('SPACE_AUTHOR_NAME', 'Not set')}")
-print(f"SPACE_REPO_NAME: {os.getenv('SPACE_REPO_NAME', 'Not set')}")
+
+SECRETS_DIR = Path('/run/secrets')
+if SECRETS_DIR.exists():
+    print(f"✓ Secrets directory exists: {SECRETS_DIR}")
+    secret_files = list(SECRETS_DIR.glob('*'))
+    print(f"  Found {len(secret_files)} secret files")
+    for secret_file in secret_files:
+        print(f"  - {secret_file.name}")
+        # Load secrets into environment
+        try:
+            with open(secret_file, 'r') as f:
+                secret_value = f.read().strip()
+                os.environ[secret_file.name.upper()] = secret_value
+                print(f"    ✓ Loaded {secret_file.name} ({len(secret_value)} chars)")
+        except Exception as e:
+            print(f"    ✗ Error loading {secret_file.name}: {e}")
+else:
+    print("⚠ Secrets directory not found, checking environment variables...")
+
+# Debug: Check what we have now
+print("\nEnvironment variables status:")
 print(f"GOOGLE_APPLICATION_CREDENTIALS_JSON: {'Set (' + str(len(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON', ''))) + ' chars)' if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON') else 'NOT SET'}")
 print(f"GOOGLE_PROJECT_ID: {os.getenv('GOOGLE_PROJECT_ID', 'NOT SET')}")
 print(f"GOOGLE_LOCATION: {os.getenv('GOOGLE_LOCATION', 'NOT SET')}")
