@@ -1,6 +1,6 @@
 """
 Stock Research Dashboard
-Flask backend with yfinance data, technical indicators, and Claude AI reports
+Flask backend with yfinance data, technical indicators, and Google Gemini AI reports
 """
 
 import os
@@ -12,7 +12,8 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from flask import Flask, render_template, jsonify, request
-from anthropic import Anthropic
+from google import genai as vertex_genai
+from google.genai import types
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -33,8 +34,20 @@ SUPPORTED_STOCKS = {
     'HDFCBANK.NS': 'HDFC Bank'
 }
 
-# Initialize Anthropic client
-anthropic_client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+# Initialize Google Vertex AI Gemini client
+gemini_client = None
+if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+    try:
+        gemini_client = vertex_genai.Client(
+            vertexai=True,
+            project=os.getenv('GOOGLE_PROJECT_ID', 'gemini-423216'),
+            location=os.getenv('GOOGLE_LOCATION', 'us-central1')
+        )
+        print("✓ Gemini AI client initialized successfully")
+    except Exception as e:
+        print(f"⚠ Warning: Failed to initialize Gemini client: {e}")
+else:
+    print("⚠ Warning: GOOGLE_APPLICATION_CREDENTIALS not set")
 
 
 def get_cache_path(symbol):
@@ -132,9 +145,12 @@ def get_stock_metadata(symbol):
 
 
 def generate_investment_report(symbol, stock_data, metadata):
-    """Generate investment report using Claude AI"""
+    """Generate investment report using Google Gemini AI"""
     try:
-        # Prepare data summary for Claude
+        if not gemini_client:
+            raise Exception("Gemini client not initialized. Please check your credentials.")
+
+        # Prepare data summary for Gemini
         latest = stock_data.iloc[-1]
         prev = stock_data.iloc[-2]
 
@@ -188,16 +204,17 @@ Write a 200-300 word report with:
 
 Keep it professional, data-driven, and executive-friendly. Focus on facts, not speculation."""
 
-        # Call Claude API
-        message = anthropic_client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        # Call Gemini API using Vertex AI client
+        response = gemini_client.models.generate_content(
+            model=os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-exp'),
+            config=types.GenerateContentConfig(
+                system_instruction="You are a professional financial analyst specializing in Indian stock markets and investment analysis.",
+                temperature=0.3
+            ),
+            contents=prompt
         )
 
-        report = message.content[0].text
+        report = response.text
         return {
             'success': True,
             'report': report,
@@ -260,7 +277,7 @@ def get_stock_data(symbol):
 
 @app.route('/api/report/<symbol>')
 def get_investment_report(symbol):
-    """API endpoint to generate investment report using Claude"""
+    """API endpoint to generate investment report using Google Gemini"""
     try:
         if symbol not in SUPPORTED_STOCKS:
             return jsonify({'error': f'Unsupported stock symbol: {symbol}'}), 400
@@ -294,14 +311,26 @@ def get_available_stocks():
 
 
 if __name__ == '__main__':
+    print("=" * 60)
     print("Starting Stock Research Dashboard...")
+    print("=" * 60)
     print(f"Supported stocks: {', '.join(SUPPORTED_STOCKS.keys())}")
     print(f"Cache directory: {DATA_DIR.absolute()}")
     print(f"Cache TTL: {CACHE_TTL_HOURS} hours")
+    print(f"Gemini Model: {os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-exp')}")
 
-    # Check for API key
-    if not os.getenv('ANTHROPIC_API_KEY'):
-        print("WARNING: ANTHROPIC_API_KEY not set. Report generation will fail.")
-        print("Please create a .env file with your API key.")
+    # Check for credentials
+    if not gemini_client:
+        print("\n⚠ WARNING: Gemini AI not configured!")
+        print("Please set the following in your .env file:")
+        print("  - GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/google.json")
+        print("  - GOOGLE_PROJECT_ID=your-project-id")
+        print("  - GOOGLE_LOCATION=us-central1")
+        print("\nReport generation will not work until configured.")
+    else:
+        print("\n✓ Gemini AI configured and ready")
+
+    print("=" * 60)
+    print(f"\n🚀 Server starting on http://0.0.0.0:5000\n")
 
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,18 +1,18 @@
 # Stock Research Dashboard
 
-A production-ready stock analysis dashboard powered by Flask, yfinance, and Claude AI. This application provides real-time technical analysis and AI-generated investment reports for Indian stocks.
+A production-ready stock analysis dashboard powered by Flask, yfinance, and Google Gemini AI. This application provides real-time technical analysis and AI-generated investment reports for Indian stocks.
 
 ![Dashboard Preview](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey)
-![Claude AI](https://img.shields.io/badge/Claude-Sonnet%204.5-purple)
+![Gemini AI](https://img.shields.io/badge/Gemini-Pro-blue)
 
 ## Features
 
 ### Core Capabilities
 - **Real-time Stock Data**: Fetch 1 year of daily OHLCV data for Indian stocks
 - **Technical Analysis**: Automated calculation of 20/50/200-day Moving Averages and RSI(14)
-- **AI-Powered Reports**: Claude Sonnet 4.5 generates professional investment analysis
+- **AI-Powered Reports**: Google Gemini Pro generates professional investment analysis
 - **Smart Caching**: Filesystem-based caching with 24-hour TTL for optimal performance
 - **Modern UI**: Clean, responsive Bootstrap 5 interface with Chart.js visualizations
 
@@ -41,7 +41,7 @@ cxodemo/
 - **Flask 3.0**: Web framework
 - **yfinance**: Yahoo Finance API client for stock data
 - **pandas + numpy**: Data processing and technical indicators
-- **Anthropic Claude API**: AI-powered report generation
+- **Google Gemini API**: AI-powered report generation
 
 ### Frontend
 - **Bootstrap 5**: Responsive UI framework
@@ -53,7 +53,8 @@ cxodemo/
 ### Prerequisites
 - Python 3.8 or higher
 - pip (Python package manager)
-- Anthropic API key ([Get one here](https://console.anthropic.com/))
+- Google Cloud Platform account with Vertex AI enabled
+- Service account with Vertex AI permissions
 
 ### Installation
 
@@ -73,17 +74,45 @@ cxodemo/
    pip install -r requirements.txt
    ```
 
-4. **Configure environment variables**
+4. **Set up Google Cloud credentials**
+
+   a. Go to [Google Cloud Console](https://console.cloud.google.com/)
+
+   b. Create or select a project
+
+   c. Enable Vertex AI API:
+      - Navigate to "APIs & Services" > "Library"
+      - Search for "Vertex AI API"
+      - Click "Enable"
+
+   d. Create a service account:
+      - Navigate to "IAM & Admin" > "Service Accounts"
+      - Click "Create Service Account"
+      - Name it (e.g., "gemini-stock-dashboard")
+      - Grant it "Vertex AI User" role
+      - Click "Done"
+
+   e. Create and download credentials:
+      - Click on the service account you created
+      - Go to "Keys" tab
+      - Click "Add Key" > "Create New Key"
+      - Choose "JSON" format
+      - Save the file (e.g., `google.json`) in a secure location
+
+5. **Configure environment variables**
    ```bash
    cp .env.example .env
    ```
 
-   Edit `.env` and add your Anthropic API key:
-   ```
-   ANTHROPIC_API_KEY=your_actual_api_key_here
+   Edit `.env` and update with your values:
+   ```bash
+   GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/google.json
+   GOOGLE_PROJECT_ID=your-project-id
+   GOOGLE_LOCATION=us-central1
+   GEMINI_MODEL=gemini-2.0-flash-exp
    ```
 
-5. **Create data directory** (if not exists)
+6. **Create data directory** (if not exists)
    ```bash
    mkdir -p data
    ```
