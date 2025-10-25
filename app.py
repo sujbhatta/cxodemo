@@ -19,6 +19,20 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Handle Google Cloud credentials for Hugging Face Spaces
+# Spaces stores secrets as environment variables, but we need a JSON file
+if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
+    import json
+    creds_path = 'google_credentials.json'
+    try:
+        creds_data = json.loads(os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'))
+        with open(creds_path, 'w') as f:
+            json.dump(creds_data, f)
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+        print("✓ Created credentials file from environment variable")
+    except Exception as e:
+        print(f"⚠ Warning: Failed to create credentials from env var: {e}")
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -311,6 +325,9 @@ def get_available_stocks():
 
 
 if __name__ == '__main__':
+    # Get port from environment (for Hugging Face Spaces or other platforms)
+    port = int(os.getenv('PORT', 7860))
+
     print("=" * 60)
     print("Starting Stock Research Dashboard...")
     print("=" * 60)
@@ -331,6 +348,8 @@ if __name__ == '__main__':
         print("\n✓ Gemini AI configured and ready")
 
     print("=" * 60)
-    print(f"\n🚀 Server starting on http://0.0.0.0:5000\n")
+    print(f"\n🚀 Server starting on http://0.0.0.0:{port}\n")
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Disable debug in production (Hugging Face Spaces)
+    debug_mode = os.getenv('FLASK_ENV') == 'development'
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

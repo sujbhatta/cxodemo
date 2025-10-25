@@ -136,6 +136,35 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
+## Cloud Deployment
+
+### Deploy to Hugging Face Spaces (FREE! 🎉)
+
+This app is ready to deploy to Hugging Face Spaces for free hosting!
+
+**Quick Steps:**
+1. Create a free account at https://huggingface.co
+2. Create a new Space with Docker SDK
+3. Push this repository to your Space
+4. Add your Google Cloud credentials as Secrets
+5. Your app will be live in minutes!
+
+**📖 Full deployment guide:** See [HUGGINGFACE_DEPLOYMENT.md](HUGGINGFACE_DEPLOYMENT.md) for detailed step-by-step instructions.
+
+**Benefits:**
+- ✅ Completely free forever
+- ✅ Perfect for AI/ML demos
+- ✅ Always online (no sleeping)
+- ✅ Easy sharing with public URL
+- ✅ Automatic rebuilds on git push
+
+### Other Deployment Options
+
+- **Google Cloud Run**: Seamless integration with Vertex AI (recommended for production)
+- **Render.com**: Free tier with GitHub auto-deploy
+- **Railway.app**: $5/month credit, developer-friendly
+- **PythonAnywhere**: Free tier for Flask apps
+
 ## Usage Guide
 
 ### 1. Select a Stock

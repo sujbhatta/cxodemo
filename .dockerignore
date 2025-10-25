@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data cache (will be created in container)
+data/*.csv
+
+# Environment files (set via Spaces secrets)
+.env
+*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Scripts
+push_instructions.sh
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
