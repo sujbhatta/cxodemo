@@ -61,32 +61,23 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON'):
         creds_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
         print(f"  JSON length: {len(creds_json)} characters")
 
-        # Handle newlines and control characters
-        # Some JSON may have literal newlines in strings that need escaping
-        import re
-        # Replace literal newlines in the private_key field with \\n
-        creds_json_cleaned = creds_json.replace('\\n', '\\\\n')
+        # Parse the JSON
+        creds_data = json.loads(creds_json)
+        print(f"  Parsed JSON successfully, project_id: {creds_data.get('project_id', 'N/A')}")
 
-        try:
-            creds_data = json.loads(creds_json_cleaned)
-        except json.JSONDecodeError:
-            # If that didn't work, try writing directly as-is (might be already properly formatted)
-            print(f"  Trying alternative JSON parsing...")
-            # Write the JSON directly to file and let the SDK handle it
-            with open(creds_path, 'w') as f:
-                f.write(creds_json)
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-            print(f"  ✓ Created credentials file (direct write): {creds_path}")
-            print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
-            creds_data = None  # Skip the json.dump below
+        # Fix the private_key field - ensure it has real newlines
+        if 'private_key' in creds_data:
+            # Replace escaped \n with actual newlines
+            creds_data['private_key'] = creds_data['private_key'].replace('\\n', '\n')
+            print(f"  Fixed private_key formatting")
 
-        if creds_data:
-            print(f"  Parsed JSON successfully, project_id: {creds_data.get('project_id', 'N/A')}")
-            with open(creds_path, 'w') as f:
-                json.dump(creds_data, f)
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-            print(f"  ✓ Created credentials file: {creds_path}")
-            print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
+        # Write the corrected JSON
+        with open(creds_path, 'w') as f:
+            json.dump(creds_data, f, indent=2)
+
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+        print(f"  ✓ Created credentials file: {creds_path}")
+        print(f"  ✓ Set GOOGLE_APPLICATION_CREDENTIALS={creds_path}")
 
     except json.JSONDecodeError as e:
         print(f"  ✗ JSON decode error: {e}")
